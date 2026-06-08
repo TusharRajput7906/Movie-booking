@@ -1,15 +1,10 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') })
+const https = require('https')
 const mongoose = require('mongoose')
-const axios = require('axios')
 const Movie = require('../models/Movie')
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('Connected to MongoDB for seeding'))
-  .catch(err => {
-    console.error('MongoDB connection error:', err)
-    process.exit(1)
-  })
+const TMDB_KEY = process.env.TMDB_API_KEY
+const TOTAL_PAGES = 250
 
 const genreMap = {
   28: 'Action', 12: 'Adventure', 16: 'Animation',
@@ -26,25 +21,39 @@ const languageMap = {
   es: 'Spanish', ko: 'Korean', ja: 'Japanese'
 }
 
-async function fetchPage(page) {
-  const res = await axios.get('https://api.themoviedb.org/3/movie/popular', {
-    params: {
-      api_key: process.env.TMDB_API_KEY,
-      language: 'en-US',
-      page
-    }
+function fetchPage(page) {
+  return new Promise((resolve, reject) => {
+    const url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_KEY}&language=en-US&page=${page}`
+    https.get(url, (res) => {
+      let data = ''
+      res.on('data', chunk => data += chunk)
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data)
+          resolve(parsed.results || [])
+        } catch (e) {
+          reject(e)
+        }
+      })
+    }).on('error', reject)
   })
-  return res.data.results
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 async function seed() {
   try {
+    await mongoose.connect(process.env.MONGO_URI)
+    console.log('MongoDB connected')
+
     await Movie.deleteMany({})
     console.log('Old movies cleared')
 
     let allMovies = []
 
-    for (let page = 1; page <= 250; page++) {
+    for (let page = 1; page <= TOTAL_PAGES; page++) {
       try {
         const results = await fetchPage(page)
         const formatted = results.map(m => ({
@@ -52,30 +61,30 @@ async function seed() {
           genre: m.genre_ids.map(id => genreMap[id]).filter(g => g !== undefined),
           language: languageMap[m.original_language] || 'Other',
           description: m.overview || 'No description available',
-          poster: m.poster_path ? 'https://image.tmdb.org/t/p/w500' + m.poster_path : null,
+          poster: m.poster_path
+            ? 'https://image.tmdb.org/t/p/w500' + m.poster_path
+            : null,
           rating: m.vote_average || 0,
           trailer_url: null
         }))
 
-        allMovies.push(...formatted)
-        console.log('Fetched page ' + page + '/250 — movies so far: ' + allMovies.length)
+        allMovies = allMovies.concat(formatted)
+        console.log(`Page ${page}/250 done — total movies so far: ${allMovies.length}`)
+        await sleep(250)
+
       } catch (err) {
-        console.log('Page ' + page + ' failed: ' + err.message)
+        console.log(`Page ${page} failed: ${err.message} — skipping`)
       }
-      await new Promise(r => setTimeout(r, 250))
     }
 
-    if (allMovies.length > 0) {
-      await Movie.insertMany(allMovies)
-      console.log('Seeding complete! Total movies saved: ' + allMovies.length)
-    } else {
-      console.log('No movies were fetched. Check your TMDB_API_KEY or connection.')
-    }
+    await Movie.insertMany(allMovies)
+    console.log(`Seeding complete! Total movies saved: ${allMovies.length}`)
 
-    await mongoose.disconnect()
-    process.exit(0)
-  } catch (error) {
-    console.error('Seeding encountered an error:', error)
+    mongoose.disconnect()
+    process.exit()
+
+  } catch (err) {
+    console.log('Seed failed:', err.message)
     process.exit(1)
   }
 }
