@@ -5,7 +5,11 @@ require('dotenv').config()
 
 const app = express()
 app.use(cors())
-app.use(express.json())
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf
+  }
+}))
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Server is working!' })
@@ -32,9 +36,11 @@ app.use('/api/auth', authRoutes)
 const showRoutes = require('./routes/shows')
 const seatRoutes = require('./routes/seats')
 const theaterRoutes = require('./routes/theaters')
+const paymentRoutes = require('./routes/payment')
 app.use('/api/shows', showRoutes)
 app.use('/api/seats', seatRoutes)
 app.use('/api/theaters', theaterRoutes)
+app.use('/api/payment', paymentRoutes)
 
 require('./cron/releaseSeat')
 
