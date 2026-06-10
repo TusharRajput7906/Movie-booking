@@ -107,7 +107,13 @@ router.post('/verify', protect, async (req, res) => {
       { razorpayOrderId: razorpay_order_id },
       { status: 'confirmed', razorpayPaymentId: razorpay_payment_id },
       { new: true }
-    )
+    ).populate({
+      path: 'showId',
+      populate: [
+        { path: 'movieId' },
+        { path: 'theaterId' }
+      ]
+    }).populate('seatIds')
 
     if (!order) {
       return res.status(404).json({ error: 'Order not found' })
@@ -115,9 +121,22 @@ router.post('/verify', protect, async (req, res) => {
 
     // Update seats to booked
     await Seat.updateMany(
-      { _id: { $in: order.seatIds } },
+      { _id: { $in: order.seatIds.map(s => s._id) } },
       { $set: { status: 'booked' } }
     )
+
+    const seatIds = order.seatIds.map(s => s.seatNumber)
+    const { addToEmailQueue } = require('../services/emailQueue')
+addToEmailQueue(req.user.email, {
+  name: req.user.name,
+  bookingId: order._id,
+  movieTitle: 'Your Movie',
+  theaterName: 'Your Theater',
+  showTime: 'Check your booking',
+  seatNumbers: order.seatIds.join(', '),
+  amount: order.amount,
+  paymentId: razorpay_payment_id
+})
 
     return res.status(200).json({
       success: true,

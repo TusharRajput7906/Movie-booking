@@ -44,6 +44,22 @@ app.use('/api/payment', paymentRoutes)
 
 require('./cron/releaseSeat')
 
+app.get('/api/test-email', async (req, res) => {
+  const { addToEmailQueue } = require('./services/emailQueue')
+  addToEmailQueue(process.env.EMAIL_USER, {
+    name: 'Tushar',
+    bookingId: 'TEST123456',
+    movieTitle: 'Inception',
+    theaterName: 'PVR Cinemas Delhi',
+    showTime: '25 Dec 2026 at 6:00 PM',
+    seatNumbers: 'A1, A2',
+    amount: 500,
+    paymentId: 'pay_testABC123'
+  })
+  res.json({ message: 'Email queued! Check your inbox in 30 seconds.' })
+})
+
+
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`)
 })
