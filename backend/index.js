@@ -42,6 +42,9 @@ app.use('/api/seats', seatRoutes)
 app.use('/api/theaters', theaterRoutes)
 app.use('/api/payment', paymentRoutes)
 
+const adminRoutes = require('./routes/admin')
+app.use('/api/admin', adminRoutes)
+
 require('./cron/releaseSeat')
 
 app.get('/api/test-email', async (req, res) => {
