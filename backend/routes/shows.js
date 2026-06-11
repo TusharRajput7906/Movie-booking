@@ -56,4 +56,34 @@ router.get('/:showId/seats', async (req, res) => {
   }
 })
 
+// GET / - Get shows by movieId (Public route)
+router.get('/', async (req, res) => {
+  try {
+    const { movieId } = req.query
+    const filter = {}
+    if (movieId) {
+      filter.movieId = movieId
+    }
+    const shows = await Show.find(filter).populate('theaterId')
+    res.status(200).json(shows)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// GET /:id - Get a single show by ID (Public route)
+router.get('/:id', async (req, res) => {
+  try {
+    const show = await Show.findById(req.params.id)
+      .populate('movieId')
+      .populate('theaterId')
+    if (!show) {
+      return res.status(404).json({ error: 'Show not found' })
+    }
+    res.status(200).json(show)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 module.exports = router
