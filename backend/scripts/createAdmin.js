@@ -19,11 +19,10 @@ async function createAdmin() {
 
     if (adminExists) {
       console.log(`Admin user with email ${adminEmail} already exists.`)
-      if (adminExists.role !== 'admin') {
-        adminExists.role = 'admin'
-        await adminExists.save()
-        console.log(`Updated role to 'admin' for ${adminEmail}`)
-      }
+      adminExists.role = 'admin'
+      adminExists.password = adminPassword
+      await adminExists.save()
+      console.log(`Successfully updated admin user details and password in database.`)
     } else {
       await User.create({
         name: 'Admin',

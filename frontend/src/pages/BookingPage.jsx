@@ -8,186 +8,221 @@ export default function BookingPage() {
   const navigate = useNavigate();
   const { user, token } = useAuth();
 
-  const [seats, setSeats] = useState([]);
-  const [selectedSeats, setSelectedSeats] = useState([]);
-  const [reservedSeats, setReservedSeats] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(120);
-  const [timerActive, setTimerActive] = useState(false);
-  const [show, setShow] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [paymentLoading, setPaymentLoading] = useState(false);
+  // Read saved reservation from localStorage on first load
+  const getSavedReservation = () => {
+    try {
+      const saved = localStorage.getItem(`reserved_${showId}`)
+      if (!saved) return null
+      const parsed = JSON.parse(saved)
+      const remaining = Math.floor((new Date(parsed.lockedUntil) - Date.now()) / 1000)
+      if (remaining <= 0) {
+        localStorage.removeItem(`reserved_${showId}`)
+        return null
+      }
+      return { ...parsed, remaining }
+    } catch {
+      return null
+    }
+  }
 
-  const [isReserveHovered, setIsReserveHovered] = useState(false);
-  const [isPayHovered, setIsPayHovered] = useState(false);
+  const savedReservation = getSavedReservation()
+
+  const [seats, setSeats] = useState([])
+  const [selectedSeats, setSelectedSeats] = useState([])
+  const [reservedSeats, setReservedSeats] = useState(
+    savedReservation ? savedReservation.seatIds : []
+  )
+  const [timeLeft, setTimeLeft] = useState(
+    savedReservation ? savedReservation.remaining : 120
+  )
+  const [timerActive, setTimerActive] = useState(
+    savedReservation ? true : false
+  )
+  const [show, setShow] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [isReserveHovered, setIsReserveHovered] = useState(false)
+  const [isPayHovered, setIsPayHovered] = useState(false)
 
   // Fetch show details
   useEffect(() => {
     const fetchShowDetails = async () => {
       try {
-        const response = await axios.get(`/api/shows/${showId}`);
-        setShow(response.data);
+        const response = await axios.get(`/api/shows/${showId}`)
+        setShow(response.data)
       } catch (err) {
-        console.error('Error fetching show details:', err);
-        setError('Failed to load show details.');
+        console.error('Error fetching show details:', err)
+        setError('Failed to load show details.')
       }
-    };
-    fetchShowDetails();
-  }, [showId]);
+    }
+    fetchShowDetails()
+  }, [showId])
 
-  // Fetch seat status
+  // Fetch seats
   const fetchSeats = useCallback(async () => {
     try {
-      const response = await axios.get(`/api/shows/${showId}/seats`);
-      setSeats(response.data || []);
-      setLoading(false);
+      const response = await axios.get(`/api/shows/${showId}/seats`)
+      setSeats(response.data || [])
+      setLoading(false)
     } catch (err) {
-      console.error('Error fetching seats:', err);
-      setError('Failed to load seats layout.');
-      setLoading(false);
+      console.error('Error fetching seats:', err)
+      setError('Failed to load seats layout.')
+      setLoading(false)
     }
-  }, [showId]);
+  }, [showId])
 
-  // Seat polling: fetch on mount and every 15 seconds
+  // Seat polling every 15 seconds
   useEffect(() => {
-    fetchSeats();
-    const interval = setInterval(fetchSeats, 15000);
-    return () => clearInterval(interval);
-  }, [fetchSeats]);
+    fetchSeats()
+    const interval = setInterval(fetchSeats, 15000)
+    return () => clearInterval(interval)
+  }, [fetchSeats])
 
-  // Handle seat clicks
+  // Handle seat click
   const handleSeatClick = (seat) => {
-    if (seat.status === 'booked') return;
-    const isLockedByMe = seat.lockedBy === user?.id || seat.lockedBy === user?._id;
-    if (seat.status === 'locked' && !isLockedByMe) return;
+    if (seat.status === 'booked') return
+    if (reservedSeats.length > 0) return // seats already reserved, don't allow changes
+    const isLockedByMe = seat.lockedBy === user?.id || seat.lockedBy === user?._id
+    if (seat.status === 'locked' && !isLockedByMe) return
 
     setSelectedSeats(prev => {
       if (prev.includes(seat._id)) {
-        return prev.filter(id => id !== seat._id);
+        return prev.filter(id => id !== seat._id)
       } else {
-        return [...prev, seat._id];
+        return [...prev, seat._id]
       }
-    });
-  };
+    })
+  }
 
-  // Reserve selected seats
+  // Reserve seats and save to localStorage
   const handleReserveSeats = async () => {
     try {
-      setError(null);
-      const headers = { Authorization: `Bearer ${token}` };
+      setError(null)
+      const headers = { Authorization: `Bearer ${token}` }
+      const lockedUntil = new Date(Date.now() + 2 * 60 * 1000)
 
-      // Reserve each seat via post request
       const promises = selectedSeats.map(seatId =>
         axios.post('/api/seats/reserve', { seatId }, { headers })
-      );
+      )
+      await Promise.all(promises)
 
-      await Promise.all(promises);
+      // Save to localStorage so payment button survives page exit
+      localStorage.setItem(`reserved_${showId}`, JSON.stringify({
+        seatIds: selectedSeats,
+        lockedUntil: lockedUntil.toISOString()
+      }))
 
-      setReservedSeats(selectedSeats);
-      setTimerActive(true);
-      setTimeLeft(120);
+      setReservedSeats(selectedSeats)
+      setTimerActive(true)
+      setTimeLeft(120)
+
     } catch (err) {
-      console.error('Reservation failed:', err);
-      const errMsg = err.response?.data?.error || 'Some seats are no longer available. Please refresh.';
-      alert(errMsg);
-      fetchSeats(); // Refresh seats to show updated status
+      console.error('Reservation failed:', err)
+      const errMsg = err.response?.data?.error || 'Some seats are no longer available. Please refresh.'
+      alert(errMsg)
+      fetchSeats()
     }
-  };
+  }
 
-  // Timer useEffect for seat lock expiration
+  // Timer countdown
   useEffect(() => {
-    let intervalId;
-    if (timerActive) {
-      intervalId = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            setTimerActive(false);
-            setSelectedSeats([]);
-            setReservedSeats([]);
-            alert('Time expired! Your seats have been released. Please select again.');
-            fetchSeats();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [timerActive, fetchSeats]);
+    if (!timerActive) return
 
-  // Process order creation & Razorpay checkout
+    const intervalId = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(intervalId)
+          setTimerActive(false)
+          setSelectedSeats([])
+          setReservedSeats([])
+          // Clear localStorage when timer expires
+          localStorage.removeItem(`reserved_${showId}`)
+          alert('Time expired! Your seats have been released. Please select again.')
+          fetchSeats()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(intervalId)
+  }, [timerActive, showId, fetchSeats])
+
+  // Payment handler
   const handlePayment = async () => {
-    setPaymentLoading(true);
+    setPaymentLoading(true)
     try {
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = { Authorization: `Bearer ${token}` }
       const response = await axios.post('/api/payment/create-order', {
         seatIds: reservedSeats,
         showId,
         amount: show.price * reservedSeats.length
-      }, { headers });
+      }, { headers })
 
-      const { orderId, key, amount } = response.data;
+      const { orderId, key, amount } = response.data
 
       const options = {
-        key: key,
-        amount: amount * 100, // paise
+        key,
+        amount: amount * 100,
         currency: 'INR',
         order_id: orderId,
         name: 'MovieBooking',
         description: 'Ticket Booking',
         handler: async function (response) {
           try {
-            await axios.post('/api/payment/verify', response, { headers });
-            navigate('/booking-success');
+            await axios.post('/api/payment/verify', response, { headers })
+            // Clear localStorage after successful payment
+            localStorage.removeItem(`reserved_${showId}`)
+            navigate('/booking-success')
           } catch (verifyErr) {
-            console.error(verifyErr);
-            alert('Payment verification failed');
+            console.error(verifyErr)
+            alert('Payment verification failed')
           }
         },
         prefill: {
           name: user?.name,
           email: user?.email
         },
-        theme: {
-          color: '#e50914'
+        theme: { color: '#e50914' },
+        modal: {
+          ondismiss: function() {
+            setPaymentLoading(false)
+          }
         }
-      };
+      }
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.error || 'Failed to create payment order. Please try again.');
+      console.error(err)
+      alert(err.response?.data?.error || 'Failed to create payment order. Please try again.')
     } finally {
-      setPaymentLoading(false);
+      setPaymentLoading(false)
     }
-  };
+  }
 
-  // Compute seat color status
+  // Seat color
   const getSeatColor = (seat) => {
-    if (seat.status === 'booked') return '#e74c3c'; // red
-    if (seat.status === 'locked' && !reservedSeats.includes(seat._id)) return '#f39c12'; // orange
-    if (selectedSeats.includes(seat._id) || reservedSeats.includes(seat._id)) return '#2ecc71'; // green
-    return '#95a5a6'; // gray
-  };
+    if (seat.status === 'booked') return '#e74c3c'
+    if (seat.status === 'locked' && !reservedSeats.includes(seat._id)) return '#f39c12'
+    if (selectedSeats.includes(seat._id) || reservedSeats.includes(seat._id)) return '#2ecc71'
+    return '#95a5a6'
+  }
 
   const formatShowTime = (timeString) => {
     try {
-      const dateObj = new Date(timeString);
+      const dateObj = new Date(timeString)
       return dateObj.toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
+        weekday: 'short', month: 'short', day: 'numeric'
       }) + ' at ' + dateObj.toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+        hour: '2-digit', minute: '2-digit'
+      })
     } catch {
-      return timeString;
+      return timeString
     }
-  };
+  }
 
   const styles = {
     container: {
@@ -349,14 +384,14 @@ export default function BookingPage() {
       transition: 'all 0.2s ease',
       boxShadow: isHovered ? '0 4px 12px rgba(99, 102, 241, 0.35)' : 'none',
     })
-  };
+  }
 
   if (loading || !show) {
     return (
       <div style={{ ...styles.container, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div style={{ fontSize: '1.2rem', color: '#38bdf8', fontWeight: '600' }}>Loading seats layout...</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -374,6 +409,21 @@ export default function BookingPage() {
           <div>💰 Rs. {show.price} per seat</div>
         </div>
 
+        {/* Saved reservation notice */}
+        {savedReservation && (
+          <div style={{
+            background: 'rgba(34, 197, 94, 0.1)',
+            border: '1px solid rgba(34, 197, 94, 0.3)',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            fontSize: '0.85rem',
+            color: '#86efac',
+            textAlign: 'center'
+          }}>
+            ✅ You have reserved seats. Complete your payment before time runs out!
+          </div>
+        )}
+
         {/* Screen Indicator */}
         <div style={styles.screenBar}>
           <span style={styles.screenText}>SCREEN</span>
@@ -382,7 +432,7 @@ export default function BookingPage() {
         {/* Seat Grid */}
         <div style={styles.grid}>
           {seats.map(seat => {
-            const color = getSeatColor(seat);
+            const color = getSeatColor(seat)
             return (
               <div
                 key={seat._id}
@@ -390,18 +440,18 @@ export default function BookingPage() {
                 style={styles.seat(color)}
                 onMouseEnter={(e) => {
                   if (color !== '#e74c3c' && color !== '#f39c12') {
-                    e.currentTarget.style.transform = 'scale(1.1)';
-                    e.currentTarget.style.boxShadow = '0 0 8px rgba(255,255,255,0.2)';
+                    e.currentTarget.style.transform = 'scale(1.1)'
+                    e.currentTarget.style.boxShadow = '0 0 8px rgba(255,255,255,0.2)'
                   }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'scale(1)'
+                  e.currentTarget.style.boxShadow = 'none'
                 }}
               >
                 {seat.seatNumber}
               </div>
-            );
+            )
           })}
         </div>
 
@@ -435,7 +485,7 @@ export default function BookingPage() {
           </div>
         )}
 
-        {/* Bottom Bar Controls */}
+        {/* Bottom Bar */}
         <div style={styles.bottomBar}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={styles.selectedLabel}>
@@ -475,5 +525,5 @@ export default function BookingPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

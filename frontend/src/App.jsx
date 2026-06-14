@@ -6,6 +6,7 @@ import MoviesPage from './pages/MoviesPage';
 import MovieDetailPage from './pages/MovieDetailPage';
 import BookingPage from './pages/BookingPage';
 import BookingSuccess from './pages/BookingSuccess';
+import AdminDashboard from './pages/AdminDashboard';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/movies/:id" element={<MovieDetailPage />} />
           <Route path="/book/:showId" element={<BookingPage />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -396,9 +396,8 @@ export default function MovieDetailPage() {
                         Rs. {show.price || 0}
                       </span>
                       <button
-                        onClick={() => isLoggedIn && navigate(`/book/${show._id}`)}
-                        disabled={!isLoggedIn}
-                        style={styles.bookBtn(!isLoggedIn, isHovered)}
+                        onClick={() => isLoggedIn ? navigate(`/book/${show._id}`) : navigate('/login')}
+                        style={styles.bookBtn(false, isHovered)}
                       >
                         {isLoggedIn ? 'Book Now' : 'Login to Book'}
                       </button>

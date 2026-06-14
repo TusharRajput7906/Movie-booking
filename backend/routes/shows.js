@@ -60,11 +60,12 @@ router.get('/:showId/seats', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { movieId } = req.query
-    const filter = {}
+    let shows
     if (movieId) {
-      filter.movieId = movieId
+      shows = await Show.find({ movieId }).populate('movieId').populate('theaterId')
+    } else {
+      shows = await Show.find({}).populate('movieId').populate('theaterId').sort({ showTime: 1 })
     }
-    const shows = await Show.find(filter).populate('theaterId')
     res.status(200).json(shows)
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -81,6 +82,20 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Show not found' })
     }
     res.status(200).json(show)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// DELETE /:showId - Delete a show and all associated seats (Admin only)
+router.delete('/:showId', protect, adminOnly, async (req, res) => {
+  try {
+    const show = await Show.findByIdAndDelete(req.params.showId)
+    if (!show) {
+      return res.status(404).json({ error: 'Show not found' })
+    }
+    await Seat.deleteMany({ showId: req.params.showId })
+    res.status(200).json({ message: 'Show and seats deleted successfully' })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }

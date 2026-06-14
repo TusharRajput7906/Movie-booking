@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const ALL_GENRES = [
   'Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 
@@ -14,6 +15,7 @@ const ALL_LANGUAGES = [
 ];
 
 export default function MoviesPage() {
+  const { user, logout } = useAuth();
   const [movies, setMovies] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState('');
@@ -350,6 +352,90 @@ export default function MoviesPage() {
     <div style={styles.container}>
       {/* Sidebar Filters */}
       <aside style={styles.sidebar}>
+        {/* User Account Section */}
+        <div style={styles.sidebarSection}>
+          <h3 style={styles.heading}>Account</h3>
+          {user ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: '600' }}>
+                👤 {user.name}
+              </span>
+              {user.role === 'admin' && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  style={{
+                    background: 'linear-gradient(to right, #ef4444, #b91c1c)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    color: '#ffffff',
+                    fontWeight: '600',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  Admin Panel
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  logout();
+                  window.location.reload();
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  color: '#cbd5e1',
+                  fontWeight: '600',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  background: 'linear-gradient(to right, #6366f1, #0ea5e9)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  color: '#ffffff',
+                  fontWeight: '600',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => navigate('/register')}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  color: '#cbd5e1',
+                  fontWeight: '600',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Register
+              </button>
+            </div>
+          )}
+        </div>
+
         <div style={styles.sidebarSection}>
           <h3 style={styles.heading}>Genres</h3>
           <div style={styles.filterList}>

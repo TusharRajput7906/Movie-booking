@@ -20,7 +20,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const response = await axios.post('/api/auth/login', { email, password });
-      login(response.data.user, response.data.token);
+      const user = response.data.user;
+      login(user, response.data.token);
       navigate('/');
     } catch (err) {
       console.error(err);
