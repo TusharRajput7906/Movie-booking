@@ -130,10 +130,10 @@ router.post('/verify', protect, async (req, res) => {
 addToEmailQueue(req.user.email, {
   name: req.user.name,
   bookingId: order._id,
-  movieTitle: 'Your Movie',
-  theaterName: 'Your Theater',
-  showTime: 'Check your booking',
-  seatNumbers: order.seatIds.join(', '),
+  movieTitle: order.showId.movieId.title,
+  theaterName: order.showId.theaterId.name,
+  showTime: new Date(order.showId.showTime).toLocaleString(),
+  seatNumbers: seatIds.join(', '),
   amount: order.amount,
   paymentId: razorpay_payment_id
 })

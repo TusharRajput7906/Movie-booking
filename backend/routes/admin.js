@@ -4,6 +4,8 @@ const Order = require('../models/Order')
 const Seat = require('../models/Seat')
 const Movie = require('../models/Movie')
 const EmailLog = require('../models/EmailLog')
+const Show = require('../models/Show')
+const Theater = require('../models/Theater')
 const { protect, adminOnly } = require('../middleware/auth')
 
 // Simple in-memory cache — no Redis needed
@@ -196,6 +198,90 @@ router.get('/logs', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(20)
     res.json(logs)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// GET /api/admin/theater-occupancy
+router.get('/theater-occupancy', async (req, res) => {
+  try {
+    const cached = getCache('admin:occupancy')
+    if (cached) return res.json(cached)
+
+    const data = await Show.aggregate([
+      {
+        $lookup: {
+          from: 'seats',
+          localField: '_id',
+          foreignField: 'showId',
+          as: 'seats'
+        }
+      },
+      {
+        $lookup: {
+          from: 'theaters',
+          localField: 'theaterId',
+          foreignField: '_id',
+          as: 'theater'
+        }
+      },
+      { $unwind: '$theater' },
+      {
+        $project: {
+          theaterName: '$theater.name',
+          theaterCity: '$theater.city',
+          totalSeats: { $size: '$seats' },
+          bookedSeats: {
+            $size: {
+              $filter: {
+                input: '$seats',
+                cond: { $eq: ['$$this.status', 'booked'] }
+              }
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { theaterName: '$theaterName', theaterCity: '$theaterCity' },
+          totalSeatsAcrossShows: { $sum: '$totalSeats' },
+          totalBookedAcrossShows: { $sum: '$bookedSeats' }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          theaterName: '$_id.theaterName',
+          theaterCity: '$_id.theaterCity',
+          totalSeats: '$totalSeatsAcrossShows',
+          bookedSeats: '$totalBookedAcrossShows',
+          occupancyRate: {
+            $cond: [
+              { $eq: ['$totalSeatsAcrossShows', 0] },
+              0,
+              { $multiply: [{ $divide: ['$totalBookedAcrossShows', '$totalSeatsAcrossShows'] }, 100] }
+            ]
+          }
+        }
+      },
+      { $sort: { occupancyRate: -1 } }
+    ])
+
+    setCache('admin:occupancy', data, 300)
+    res.json(data)
+
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// GET /api/admin/users
+router.get('/users', async (req, res) => {
+  try {
+    const User = require('../models/User')
+    const users = await User.find({}, 'name email role createdAt').sort({ role: -1 })
+    res.json(users)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
