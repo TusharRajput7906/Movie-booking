@@ -1,10 +1,11 @@
 const express = require('express')
 const mongoose = require('mongoose')
+const app = express()
 const cors = require('cors');
 
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://your-app-name.vercel.app' 
+  'https://movie-booking-frontend.vercel.app' 
 ]
 
 app.use(cors({
@@ -19,8 +20,6 @@ app.use(cors({
 }))
 require('dotenv').config()
 
-const app = express()
-app.use(cors())
 app.use(express.json({
   verify: (req, res, buf) => {
     req.rawBody = buf
