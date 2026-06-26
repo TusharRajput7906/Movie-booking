@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api'
 import TrailerPlayer from '../components/TrailerPlayer';
 import { useAuth } from '../context/AuthContext';
 
@@ -24,8 +24,8 @@ export default function MovieDetailPage() {
         setError(null);
 
         const [movieRes, showsRes] = await Promise.all([
-          axios.get(`/api/movies/${id}`),
-          axios.get(`/api/shows?movieId=${id}`)
+          api.get(`/api/movies/${id}`),
+          api.get(`/api/shows?movieId=${id}`)
         ]);
 
         setMovie(movieRes.data);

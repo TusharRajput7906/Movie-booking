@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api'
 import { useAuth } from '../context/AuthContext';
 
 export default function BookingPage() {
@@ -49,7 +49,7 @@ export default function BookingPage() {
   useEffect(() => {
     const fetchShowDetails = async () => {
       try {
-        const response = await axios.get(`/api/shows/${showId}`)
+        const response = await api.get(`/api/shows/${showId}`)
         setShow(response.data)
       } catch (err) {
         console.error('Error fetching show details:', err)
@@ -62,7 +62,7 @@ export default function BookingPage() {
   // Fetch seats
   const fetchSeats = useCallback(async () => {
     try {
-      const response = await axios.get(`/api/shows/${showId}/seats`)
+      const response = await api.get(`/api/shows/${showId}/seats`)
       setSeats(response.data || [])
       setLoading(false)
     } catch (err) {
@@ -103,7 +103,7 @@ export default function BookingPage() {
       const lockedUntil = new Date(Date.now() + 2 * 60 * 1000)
 
       const promises = selectedSeats.map(seatId =>
-        axios.post('/api/seats/reserve', { seatId }, { headers })
+        api.post('/api/seats/reserve', { seatId }, { headers })
       )
       await Promise.all(promises)
 
@@ -154,7 +154,7 @@ export default function BookingPage() {
     setPaymentLoading(true)
     try {
       const headers = { Authorization: `Bearer ${token}` }
-      const response = await axios.post('/api/payment/create-order', {
+      const response = await api.post('/api/payment/create-order', {
         seatIds: reservedSeats,
         showId,
         amount: show.price * reservedSeats.length
@@ -171,7 +171,7 @@ export default function BookingPage() {
         description: 'Ticket Booking',
         handler: async function (response) {
           try {
-            await axios.post('/api/payment/verify', response, { headers })
+            await api.post('/api/payment/verify', response, { headers })
             // Clear localStorage after successful payment
             localStorage.removeItem(`reserved_${showId}`)
             navigate('/booking-success')

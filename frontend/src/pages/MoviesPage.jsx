@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api'
 import { useAuth } from '../context/AuthContext';
 
 const ALL_GENRES = [
@@ -45,7 +45,7 @@ export default function MoviesPage() {
       params.append('page', page.toString());
       params.append('limit', '20');
 
-      const response = await axios.get(`/api/movies?${params.toString()}`);
+      const response = await api.get(`/api/movies?${params.toString()}`);
       setMovies(response.data.movies || []);
       setTotal(response.data.total || 0);
       setTotalPages(response.data.totalPages || 1);

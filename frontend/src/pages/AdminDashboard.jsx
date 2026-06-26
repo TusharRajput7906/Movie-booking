@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api'
 import { useAuth } from '../context/AuthContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -59,9 +59,9 @@ export default function AdminDashboard() {
       setLoading(true);
       const config = authHeader();
       const [statsRes, revenueRes, topMoviesRes] = await Promise.all([
-        axios.get('/api/admin/stats', config),
-        axios.get(`/api/admin/revenue?period=${period}`, config),
-        axios.get('/api/admin/top-movies', config)
+        api.get('/api/admin/stats', config),
+        api.get(`/api/admin/revenue?period=${period}`, config),
+        api.get('/api/admin/top-movies', config)
       ]);
 
       setStats(statsRes.data || {
@@ -80,17 +80,17 @@ export default function AdminDashboard() {
   };
 
   const fetchMovies = async () => {
-    const { data } = await axios.get('/api/movies?limit=100')
+    const { data } = await api.get('/api/movies?limit=100')
     setMovies(data.movies || [])
   }
 
   const fetchTheaters = async () => {
-    const { data } = await axios.get('/api/theaters')
+    const { data } = await api.get('/api/theaters')
     setTheaters(data || [])
   }
 
   const fetchShows = async () => {
-    const { data } = await axios.get('/api/shows', authHeader())
+    const { data } = await api.get('/api/shows', authHeader())
     setShows(data || [])
   }
 
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
     setFormMessage('')
     setFormError('')
     try {
-      await axios.post('/api/shows', showForm, authHeader())
+      await api.post('/api/shows', showForm, authHeader())
       setFormMessage('Show created successfully!')
       setShowForm({ movieId: '', theaterId: '', showTime: '', price: '' })
       fetchShows()
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
     setFormMessage('')
     setFormError('')
     try {
-      await axios.post('/api/theaters', theaterForm, authHeader())
+      await api.post('/api/theaters', theaterForm, authHeader())
       setFormMessage('Theater created successfully!')
       setTheaterForm({ name: '', address: '', city: '', totalSeats: '' })
       fetchTheaters()
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
   const handleDeleteShow = async (showId) => {
     if (!window.confirm('Delete this show?')) return
     try {
-      await axios.delete(`/api/shows/${showId}`, authHeader())
+      await api.delete(`/api/shows/${showId}`, authHeader())
       setFormMessage('Show deleted!')
       fetchShows()
     } catch (err) {
