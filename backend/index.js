@@ -1,6 +1,22 @@
 const express = require('express')
 const mongoose = require('mongoose')
-const cors = require('cors')
+const cors = require('cors');
+
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://your-app-name.vercel.app' 
+]
+
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
+}))
 require('dotenv').config()
 
 const app = express()
