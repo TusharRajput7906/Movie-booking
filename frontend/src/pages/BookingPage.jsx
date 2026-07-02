@@ -45,6 +45,16 @@ export default function BookingPage() {
   const [isReserveHovered, setIsReserveHovered] = useState(false)
   const [isPayHovered, setIsPayHovered] = useState(false)
 
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 768;
+
   // Fetch show details
   useEffect(() => {
     const fetchShowDetails = async () => {
@@ -230,18 +240,18 @@ export default function BookingPage() {
       background: 'radial-gradient(circle at top left, #1e1b4b, #0f172a 75%)',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       color: '#f8fafc',
-      padding: '40px 20px',
+      padding: isMobile ? '12px 12px 80px 12px' : '40px 20px',
       boxSizing: 'border-box',
     },
     wrapper: {
-      maxWidth: '680px',
+      maxWidth: isMobile ? '100%' : '680px',
       margin: '0 auto',
       background: 'rgba(30, 41, 59, 0.45)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
       border: '1px solid rgba(255, 255, 255, 0.06)',
-      borderRadius: '24px',
-      padding: '32px',
+      borderRadius: isMobile ? '16px' : '24px',
+      padding: isMobile ? '16px' : '32px',
       boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
       display: 'flex',
       flexDirection: 'column',
@@ -264,7 +274,7 @@ export default function BookingPage() {
       display: 'flex',
       flexDirection: 'column',
       gap: '6px',
-      fontSize: '0.9rem',
+      fontSize: isMobile ? '13px' : '14px',
       color: '#cbd5e1',
     },
     screenBar: {
@@ -289,21 +299,21 @@ export default function BookingPage() {
     grid: {
       display: 'flex',
       flexWrap: 'wrap',
-      gap: '8px',
+      gap: isMobile ? '5px' : '8px',
       justifyContent: 'center',
       margin: '20px 0',
       maxWidth: '440px',
       alignSelf: 'center',
     },
     seat: (color) => ({
-      width: '36px',
-      height: '36px',
+      width: isMobile ? '30px' : '36px',
+      height: isMobile ? '30px' : '36px',
       borderRadius: '6px',
       backgroundColor: color,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      fontSize: '10px',
+      fontSize: isMobile ? '9px' : '10px',
       fontWeight: 'bold',
       color: '#ffffff',
       cursor: 'pointer',
@@ -357,8 +367,10 @@ export default function BookingPage() {
       borderTop: '1px solid rgba(255, 255, 255, 0.05)',
       paddingTop: '20px',
       display: 'flex',
+      flexDirection: isMobile ? 'column' : 'row',
+      gap: isMobile ? '12px' : '0',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: isMobile ? 'stretch' : 'center',
     },
     selectedLabel: {
       fontSize: '0.95rem',
@@ -376,13 +388,14 @@ export default function BookingPage() {
         : 'linear-gradient(to right, #6366f1, #0ea5e9)',
       border: 'none',
       borderRadius: '10px',
-      padding: '12px 24px',
+      padding: isMobile ? '14px' : '12px 24px',
       color: '#ffffff',
       fontWeight: '600',
       fontSize: '0.9rem',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
       boxShadow: isHovered ? '0 4px 12px rgba(99, 102, 241, 0.35)' : 'none',
+      width: isMobile ? '100%' : 'auto',
     })
   }
 

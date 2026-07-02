@@ -19,6 +19,16 @@ export default function AdminDashboard() {
   const [period, setPeriod] = useState('daily');
   const [loading, setLoading] = useState(true);
 
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 768;
+
   const [movies, setMovies] = useState([])
   const [theaters, setTheaters] = useState([])
   const [shows, setShows] = useState([])
@@ -155,23 +165,26 @@ export default function AdminDashboard() {
   const styles = {
     container: {
       display: 'flex',
+      flexDirection: isMobile ? 'column' : 'row',
       minHeight: '100vh',
       backgroundColor: '#0f172a',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       color: '#f8fafc',
     },
     sidebar: {
-      width: '200px',
+      width: isMobile ? '100%' : '200px',
       backgroundColor: '#1a1a1a',
       color: '#ffffff',
       display: 'flex',
-      flexDirection: 'column',
-      padding: '24px 16px',
+      flexDirection: isMobile ? 'row' : 'column',
+      padding: isMobile ? '12px' : '24px 16px',
       boxSizing: 'border-box',
-      gap: '30px',
-      position: 'sticky',
+      gap: isMobile ? '6px' : '30px',
+      flexWrap: isMobile ? 'wrap' : 'nowrap',
+      flexShrink: 0,
+      position: isMobile ? 'static' : 'sticky',
       top: 0,
-      height: '100vh',
+      height: isMobile ? 'auto' : '100vh',
     },
     appName: {
       fontSize: '1.2rem',
@@ -203,14 +216,14 @@ export default function AdminDashboard() {
       background: 'transparent',
       border: '1px solid rgba(255, 255, 255, 0.2)',
       borderRadius: '8px',
-      padding: '10px 16px',
+      padding: isMobile ? '6px 10px' : '10px 16px',
       fontWeight: '600',
       color: '#cbd5e1',
       cursor: 'pointer',
       textAlign: 'left',
-      fontSize: '0.9rem',
+      fontSize: isMobile ? '12px' : '0.9rem',
       transition: 'all 0.2s ease',
-      marginTop: 'auto',
+      marginTop: isMobile ? '0' : 'auto',
     },
     mainContent: {
       flex: 1,
@@ -228,16 +241,16 @@ export default function AdminDashboard() {
     },
     grid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(2, 1fr)',
-      gap: '20px',
-      marginBottom: '32px',
+      gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
+      gap: isMobile ? '10px' : '16px',
+      marginBottom: '24px',
     },
     card: {
       background: 'rgba(30, 41, 59, 0.45)',
       backdropFilter: 'blur(10px)',
       border: '1px solid rgba(255, 255, 255, 0.06)',
       borderRadius: '16px',
-      padding: '20px',
+      padding: isMobile ? '12px' : '20px',
       display: 'flex',
       flexDirection: 'column',
       gap: '6px',
@@ -251,13 +264,13 @@ export default function AdminDashboard() {
       letterSpacing: '0.05em',
     },
     cardValue: {
-      fontSize: '1.6rem',
+      fontSize: isMobile ? '20px' : '28px',
       fontWeight: '800',
       color: '#ffffff',
       margin: 0,
     },
     cardValueRevenue: {
-      fontSize: '1.6rem',
+      fontSize: isMobile ? '20px' : '28px',
       fontWeight: '800',
       background: 'linear-gradient(to right, #34d399, #059669)',
       WebkitBackgroundClip: 'text',
@@ -371,7 +384,7 @@ export default function AdminDashboard() {
       {/* Sidebar */}
       <aside style={styles.sidebar}>
         <h2 style={styles.appName}>MovieBooking Admin</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '6px' : '4px', flexWrap: isMobile ? 'wrap' : 'nowrap', marginTop: isMobile ? '0' : '24px' }}>
           {[
             { key: 'dashboard', label: 'Dashboard' },
             { key: 'shows', label: 'Manage Shows' },
@@ -388,11 +401,11 @@ export default function AdminDashboard() {
                 background: activeTab === tab.key ? '#e50914' : 'transparent',
                 border: 'none',
                 color: '#ffffff',
-                padding: '10px 16px',
+                padding: isMobile ? '6px 10px' : '10px 16px',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 textAlign: 'left',
-                fontSize: '14px',
+                fontSize: isMobile ? '12px' : '14px',
                 fontWeight: activeTab === tab.key ? '600' : '400'
               }}
             >
@@ -460,8 +473,8 @@ export default function AdminDashboard() {
               {revenue.length === 0 ? (
                 <div style={styles.emptyMessage}>No revenue data yet</div>
               ) : (
-                <div style={{ width: '100%', height: 300 }}>
-                  <ResponsiveContainer width="100%" height={300}>
+                <div style={{ width: '100%', height: isMobile ? 200 : 300 }}>
+                  <ResponsiveContainer width="100%" height={isMobile ? 200 : 300}>
                     <BarChart data={revenue} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" />
                       <XAxis dataKey="_id" stroke="#94a3b8" fontSize={11} tickLine={false} />
@@ -485,24 +498,26 @@ export default function AdminDashboard() {
                 <div style={styles.emptyMessage}>No booking data yet</div>
               ) : (
                 <div style={styles.tableContainer}>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr>
-                        <th style={styles.th}>Rank</th>
-                        <th style={styles.th}>Movie Title</th>
-                        <th style={styles.th}>Bookings</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {topMovies.map((movie, index) => (
-                        <tr key={movie._id || index}>
-                          <td style={styles.tdBold}>#{index + 1}</td>
-                          <td style={styles.td}>{movie.movieTitle}</td>
-                          <td style={styles.td}>{movie.bookings}</td>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={styles.table}>
+                      <thead>
+                        <tr>
+                          <th style={styles.th}>Rank</th>
+                          <th style={styles.th}>Movie Title</th>
+                          <th style={styles.th}>Bookings</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {topMovies.map((movie, index) => (
+                          <tr key={movie._id || index}>
+                            <td style={styles.tdBold}>#{index + 1}</td>
+                            <td style={styles.td}>{movie.movieTitle}</td>
+                            <td style={styles.td}>{movie.bookings}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
@@ -533,7 +548,7 @@ export default function AdminDashboard() {
                 Create New Show
               </h3>
               <form onSubmit={handleCreateShow}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr',
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
                   gap: '12px', marginBottom: '12px' }}>
                   
                   <div>
@@ -634,44 +649,46 @@ export default function AdminDashboard() {
               {shows.length === 0 ? (
                 <p style={{ color: '#64748b' }}>No shows created yet.</p>
               ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse',
-                  fontSize: '13px', color: '#cbd5e1' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #334155' }}>
-                      <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Movie</th>
-                      <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Theater</th>
-                      <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Date & Time</th>
-                      <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Price</th>
-                      <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {shows.map(s => (
-                      <tr key={s._id} style={{ borderBottom: '1px solid #1e293b' }}>
-                        <td style={{ padding: '10px 8px' }}>
-                          {s.movieId?.title || 'Unknown'}
-                        </td>
-                        <td style={{ padding: '10px 8px' }}>
-                          {s.theaterId?.name || 'Unknown'} - {s.theaterId?.city || ''}
-                        </td>
-                        <td style={{ padding: '10px 8px' }}>
-                          {new Date(s.showTime).toLocaleString()}
-                        </td>
-                        <td style={{ padding: '10px 8px' }}>Rs. {s.price}</td>
-                        <td style={{ padding: '10px 8px' }}>
-                          <button
-                            onClick={() => handleDeleteShow(s._id)}
-                            style={{ background: '#7f1d1d', color: '#fca5a5',
-                              border: 'none', padding: '4px 12px', borderRadius: '6px',
-                              cursor: 'pointer', fontSize: '12px' }}
-                          >
-                            Delete
-                          </button>
-                        </td>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse',
+                    fontSize: '13px', color: '#cbd5e1' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #334155' }}>
+                        <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Movie</th>
+                        <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Theater</th>
+                        <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Date & Time</th>
+                        <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Price</th>
+                        <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {shows.map(s => (
+                        <tr key={s._id} style={{ borderBottom: '1px solid #1e293b' }}>
+                          <td style={{ padding: '10px 8px' }}>
+                            {s.movieId?.title || 'Unknown'}
+                          </td>
+                          <td style={{ padding: '10px 8px' }}>
+                            {s.theaterId?.name || 'Unknown'} - {s.theaterId?.city || ''}
+                          </td>
+                          <td style={{ padding: '10px 8px' }}>
+                            {new Date(s.showTime).toLocaleString()}
+                          </td>
+                          <td style={{ padding: '10px 8px' }}>Rs. {s.price}</td>
+                          <td style={{ padding: '10px 8px' }}>
+                            <button
+                              onClick={() => handleDeleteShow(s._id)}
+                              style={{ background: '#7f1d1d', color: '#fca5a5',
+                                border: 'none', padding: '4px 12px', borderRadius: '6px',
+                                cursor: 'pointer', fontSize: '12px' }}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
@@ -700,7 +717,7 @@ export default function AdminDashboard() {
                 Theater Details
               </h3>
               <form onSubmit={handleCreateTheater}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr',
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
                   gap: '12px', marginBottom: '16px' }}>
 
                   <div>
@@ -789,27 +806,29 @@ export default function AdminDashboard() {
               {theaters.length === 0 ? (
                 <p style={{ color: '#64748b' }}>No theaters added yet.</p>
               ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse',
-                  fontSize: '13px', color: '#cbd5e1' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #334155' }}>
-                      <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Name</th>
-                      <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>City</th>
-                      <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Address</th>
-                      <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Seats</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {theaters.map(t => (
-                      <tr key={t._id} style={{ borderBottom: '1px solid #1e293b' }}>
-                        <td style={{ padding: '10px 8px' }}>{t.name}</td>
-                        <td style={{ padding: '10px 8px' }}>{t.city}</td>
-                        <td style={{ padding: '10px 8px' }}>{t.address}</td>
-                        <td style={{ padding: '10px 8px' }}>{t.totalSeats}</td>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse',
+                    fontSize: '13px', color: '#cbd5e1' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #334155' }}>
+                        <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Name</th>
+                        <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>City</th>
+                        <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Address</th>
+                        <th style={{ textAlign: 'left', padding: '8px', color: '#94a3b8' }}>Seats</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {theaters.map(t => (
+                        <tr key={t._id} style={{ borderBottom: '1px solid #1e293b' }}>
+                          <td style={{ padding: '10px 8px' }}>{t.name}</td>
+                          <td style={{ padding: '10px 8px' }}>{t.city}</td>
+                          <td style={{ padding: '10px 8px' }}>{t.address}</td>
+                          <td style={{ padding: '10px 8px' }}>{t.totalSeats}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>

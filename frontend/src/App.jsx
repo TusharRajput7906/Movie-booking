@@ -7,11 +7,13 @@ import MovieDetailPage from './pages/MovieDetailPage';
 import BookingPage from './pages/BookingPage';
 import BookingSuccess from './pages/BookingSuccess';
 import AdminDashboard from './pages/AdminDashboard';
+import Navbar from './components/Navbar';
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Navbar />
         <Routes>
           <Route path="/" element={<MoviesPage />} />
           <Route path="/login" element={<LoginPage />} />

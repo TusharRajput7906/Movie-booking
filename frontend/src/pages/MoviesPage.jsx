@@ -26,6 +26,17 @@ export default function MoviesPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  const [showFilters, setShowFilters] = useState(false)
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const isMobile = windowWidth < 768
+
   const [hoveredGenre, setHoveredGenre] = useState(null);
   const [hoveredLang, setHoveredLang] = useState(null);
   const [isClearHovered, setIsClearHovered] = useState(false);
@@ -103,25 +114,29 @@ export default function MoviesPage() {
   const styles = {
     container: {
       display: 'flex',
+      flexDirection: isMobile ? 'column' : 'row',
       minHeight: '100vh',
       background: 'radial-gradient(circle at top left, #1e1b4b, #0f172a 75%)',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       color: '#f8fafc',
+      gap: isMobile ? '12px' : '24px'
     },
     sidebar: {
-      width: '220px',
+      width: isMobile ? '100%' : '220px',
+      flexShrink: 0,
+      display: isMobile && !showFilters ? 'none' : 'flex',
       background: 'rgba(15, 23, 42, 0.45)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
-      borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRight: isMobile ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+      borderBottom: isMobile ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
       padding: '30px 20px',
-      display: 'flex',
       flexDirection: 'column',
       gap: '28px',
       boxSizing: 'border-box',
-      position: 'sticky',
+      position: isMobile ? 'static' : 'sticky',
       top: 0,
-      height: '100vh',
+      height: isMobile ? 'auto' : '100vh',
       overflowY: 'auto',
     },
     sidebarSection: {
@@ -181,12 +196,12 @@ export default function MoviesPage() {
     },
     mainContent: {
       flex: 1,
-      padding: '40px',
+      padding: isMobile ? '12px' : '24px',
       display: 'flex',
       flexDirection: 'column',
       gap: '24px',
       boxSizing: 'border-box',
-      height: '100vh',
+      height: isMobile ? 'auto' : '100vh',
       overflowY: 'auto',
     },
     headerRow: {
@@ -219,15 +234,19 @@ export default function MoviesPage() {
     },
     grid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: '30px',
+      gridTemplateColumns: windowWidth < 480 ? '1fr' : 
+                           windowWidth < 768 ? 'repeat(2, 1fr)' : 
+                           windowWidth < 1024 ? 'repeat(2, 1fr)' :
+                           'repeat(3, 1fr)',
+      gap: isMobile ? '12px' : '20px',
+      flex: 1
     },
     card: (isHovered) => ({
-      background: 'rgba(30, 41, 59, 0.45)',
+      background: '#1e293b',
       backdropFilter: 'blur(10px)',
       WebkitBackdropFilter: 'blur(10px)',
       border: isHovered ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid rgba(255, 255, 255, 0.06)',
-      borderRadius: '16px',
+      borderRadius: '10px',
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
@@ -236,15 +255,16 @@ export default function MoviesPage() {
       boxShadow: isHovered 
         ? '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.15)' 
         : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      cursor: 'pointer',
     }),
     posterImage: {
       width: '100%',
-      height: '200px',
+      height: isMobile ? '160px' : '200px',
       objectFit: 'cover',
     },
     placeholderPoster: {
       width: '100%',
-      height: '200px',
+      height: isMobile ? '160px' : '200px',
       background: 'linear-gradient(135deg, #1e293b, #0f172a)',
       display: 'flex',
       justifyContent: 'center',
@@ -507,6 +527,24 @@ export default function MoviesPage() {
 
       {/* Main Content Area */}
       <main style={styles.mainContent}>
+        {isMobile && (
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            style={{
+              width: '100%',
+              padding: '10px',
+              marginBottom: '12px',
+              background: '#6366f1',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            {showFilters ? 'Hide Filters ▲' : 'Show Filters ▼'}
+          </button>
+        )}
         <div style={styles.headerRow}>
           <h1 style={styles.mainTitle}>Explore Movies</h1>
           <span style={styles.totalCount}>Total: {total} movies</span>

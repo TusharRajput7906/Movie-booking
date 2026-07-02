@@ -17,6 +17,16 @@ export default function MovieDetailPage() {
   const [isBackHovered, setIsBackHovered] = useState(false);
   const [hoveredShowId, setHoveredShowId] = useState(null);
 
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 768;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -66,7 +76,7 @@ export default function MovieDetailPage() {
       background: 'radial-gradient(circle at top left, #1e1b4b, #0f172a 75%)',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       color: '#f8fafc',
-      padding: '40px 20px',
+      padding: isMobile ? '12px 12px 60px 12px' : '40px 20px',
       boxSizing: 'border-box',
     },
     wrapper: {
@@ -89,33 +99,34 @@ export default function MovieDetailPage() {
     },
     detailsSection: {
       display: 'flex',
-      flexDirection: 'row',
-      gap: '32px',
+      flexDirection: isMobile ? 'column' : 'row',
+      gap: isMobile ? '16px' : '32px',
       background: 'rgba(30, 41, 59, 0.45)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
       border: '1px solid rgba(255, 255, 255, 0.06)',
       borderRadius: '24px',
-      padding: '32px',
+      padding: isMobile ? '12px' : '24px',
       boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
     },
     leftColumn: {
-      flex: 1,
+      width: isMobile ? '100%' : '300px',
+      flexShrink: 0,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'flex-start',
     },
     posterImage: {
       width: '100%',
-      maxWidth: '280px',
-      height: 'auto',
-      borderRadius: '16px',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
+      maxWidth: isMobile ? '200px' : '300px',
+      margin: isMobile ? '0 auto' : '0',
+      display: 'block',
+      borderRadius: '12px',
       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
     },
     placeholderPoster: {
       width: '100%',
-      maxWidth: '280px',
+      maxWidth: isMobile ? '200px' : '300px',
       height: '380px',
       background: 'linear-gradient(135deg, #1e293b, #0f172a)',
       borderRadius: '16px',
@@ -129,6 +140,7 @@ export default function MovieDetailPage() {
       fontSize: '1.2rem',
       fontWeight: 'bold',
       color: '#64748b',
+      margin: isMobile ? '0 auto' : '0',
     },
     rightColumn: {
       flex: 2,
@@ -137,7 +149,7 @@ export default function MovieDetailPage() {
       gap: '20px',
     },
     title: {
-      fontSize: '28px',
+      fontSize: isMobile ? '22px' : '28px',
       fontWeight: '800',
       margin: 0,
       background: 'linear-gradient(to right, #ffffff, #cbd5e1)',
@@ -209,9 +221,10 @@ export default function MovieDetailPage() {
       textAlign: 'center',
     },
     showsGrid: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '16px',
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+      gap: '12px',
+      marginTop: '12px',
     },
     showCard: {
       background: 'rgba(30, 41, 59, 0.35)',

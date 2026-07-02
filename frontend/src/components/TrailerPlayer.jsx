@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function TrailerPlayer({ videoId }) {
   const [playing, setPlaying] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const height = windowWidth < 768 ? '200px' : '315px';
 
   const styles = {
     fallbackContainer: {
-      height: '250px',
+      height,
       backgroundColor: '#1a1a1a',
       display: 'flex',
       alignItems: 'center',
@@ -23,13 +32,13 @@ export default function TrailerPlayer({ videoId }) {
       cursor: 'pointer',
       borderRadius: '12px',
       overflow: 'hidden',
-      height: '250px',
+      height,
       border: '1px solid rgba(255, 255, 255, 0.05)',
       boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
     },
     thumbnail: {
       width: '100%',
-      height: '250px',
+      height,
       objectFit: 'cover',
       display: 'block',
     },
@@ -54,7 +63,7 @@ export default function TrailerPlayer({ videoId }) {
     },
     iframe: {
       width: '100%',
-      height: '250px',
+      height,
       border: 'none',
       display: 'block',
       borderRadius: '12px',

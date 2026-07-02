@@ -12,9 +12,11 @@ export default function BookingSuccess() {
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       color: '#f8fafc',
       display: 'flex',
-      justifyContent: 'center',
+      flexDirection: 'column',
       alignItems: 'center',
+      justifyContent: 'center',
       padding: '20px',
+      textAlign: 'center',
       boxSizing: 'border-box',
     },
     card: {
@@ -75,6 +77,7 @@ export default function BookingSuccess() {
       transition: 'all 0.2s ease',
       boxShadow: isBtnHovered ? '0 10px 15px -3px rgba(99, 102, 241, 0.35)' : 'none',
       width: '100%',
+      maxWidth: '300px',
       marginTop: '10px',
     }
   };
